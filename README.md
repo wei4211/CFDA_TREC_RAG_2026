@@ -12,10 +12,11 @@ generation over the ClimbMix collection.
 - **指導老師 / Advisor:** 王釧茹
 - **帶隊學長 / Mentor:** 張立暘
 - **單位 / Group:** CITI, Academia Sinica — CFDA team
-- **Technical report:** [*CFDA at TREC 2026 Retrieval-Augmented Generation Track*](docs/technical_report.pdf)
-- **Status:** Public implementation of the competition system. Official 2026
-  test scores are organizer-run and were not available at the time of writing;
-  the results below are 22-topic development-set diagnostics.
+- **Original repository:** [AnnieHsieh-12/TREC_RAG_2026](https://github.com/AnnieHsieh-12/TREC_RAG_2026)
+- **Status:** Public implementation of the competition system. The team
+  technical report is not yet public. Official 2026 test scores are
+  organizer-run and were not available at the time of writing; the results
+  below are 22-topic development-set diagnostics.
 
 ## System overview
 
@@ -165,9 +166,7 @@ CFDA_TREC_RAG_2026/
 ├── requirements.in                direct Python dependencies
 ├── requirements.lock              resolved Python 3.12 environment
 ├── examples/                       minimal format examples
-├── docs/
-│   ├── figures/                    pipeline diagrams used in this README
-│   └── technical_report.pdf        CFDA team technical report
+├── docs/figures/                   pipeline diagrams used in this README
 ├── .github/workflows/ci.yml        automated checks
 ├── code/
 │   ├── config/final_pipeline.ts    Retrieval configuration
@@ -530,11 +529,12 @@ responses may prevent byte-identical reproduction of a previous run.
 This is the CFDA team system for the TREC RAG 2026 track, developed during a
 summer 2026 internship at the Research Center for Information Technology
 Innovation (CITI), Academia Sinica, under the supervision of 王釧茹 and 張立暘.
-The design
-and development results are described in the team technical report,
-[*CFDA at TREC 2026 Retrieval-Augmented Generation Track*](docs/technical_report.pdf)
-(P.-J. Hsieh, S.-H. Wu, Y.-C. Hsiao, J.-K. Tsao, H.-W. Chen, L.-Y. Chang,
-M.-F. Tsai, C.-J. Wang).
+The original repository is
+[AnnieHsieh-12/TREC_RAG_2026](https://github.com/AnnieHsieh-12/TREC_RAG_2026),
+maintained by the CFDA team. The design and development results are described
+in the team technical report, *CFDA at TREC 2026 Retrieval-Augmented Generation
+Track* (P.-J. Hsieh, S.-H. Wu, Y.-C. Hsiao, J.-K. Tsao, H.-W. Chen, L.-Y.
+Chang, M.-F. Tsai, C.-J. Wang), which is not yet public.
 
 ## License
 
