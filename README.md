@@ -16,8 +16,6 @@ generation over the ClimbMix collection.
   test scores are organizer-run and were not available at the time of writing;
   the results below are 22-topic development-set diagnostics.
 
-This repository is maintained by [@wei4211](https://github.com/wei4211).
-
 ## System overview
 
 The system contains two related pipelines:
@@ -534,8 +532,7 @@ Innovation (CITI), Academia Sinica, under the supervision of 王釧茹. The desi
 and development results are described in the team technical report,
 [*CFDA at TREC 2026 Retrieval-Augmented Generation Track*](docs/technical_report.pdf)
 (P.-J. Hsieh, S.-H. Wu, Y.-C. Hsiao, J.-K. Tsao, H.-W. Chen, L.-Y. Chang,
-M.-F. Tsai, C.-J. Wang). This repository is maintained by
-[@wei4211](https://github.com/wei4211).
+M.-F. Tsai, C.-J. Wang).
 
 ## License
 
