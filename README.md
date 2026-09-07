@@ -10,6 +10,7 @@ reranking, iterative evidence acquisition, and citation-grounded answer
 generation over the ClimbMix collection.
 
 - **指導老師 / Advisor:** 王釧茹
+- **帶隊學長 / Mentor:** 張立暘
 - **單位 / Group:** CITI, Academia Sinica — CFDA team
 - **Technical report:** [*CFDA at TREC 2026 Retrieval-Augmented Generation Track*](docs/technical_report.pdf)
 - **Status:** Public implementation of the competition system. Official 2026
@@ -528,7 +529,8 @@ responses may prevent byte-identical reproduction of a previous run.
 
 This is the CFDA team system for the TREC RAG 2026 track, developed during a
 summer 2026 internship at the Research Center for Information Technology
-Innovation (CITI), Academia Sinica, under the supervision of 王釧茹. The design
+Innovation (CITI), Academia Sinica, under the supervision of 王釧茹 and 張立暘.
+The design
 and development results are described in the team technical report,
 [*CFDA at TREC 2026 Retrieval-Augmented Generation Track*](docs/technical_report.pdf)
 (P.-J. Hsieh, S.-H. Wu, Y.-C. Hsiao, J.-K. Tsao, H.-W. Chen, L.-Y. Chang,
