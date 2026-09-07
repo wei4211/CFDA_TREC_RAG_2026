@@ -9,8 +9,7 @@ TREC RAG 2026 track. The system combines multi-route retrieval, neural
 reranking, iterative evidence acquisition, and citation-grounded answer
 generation over the ClimbMix collection.
 
-- **指導老師 / Advisor:** 王釧茹
-- **帶隊學長 / Mentor:** 張立暘
+- **指導老師 / Advisor:** 王釧茹教授、張立暘學長
 - **單位 / Group:** CITI, Academia Sinica — CFDA team
 - **Original repository:** [AnnieHsieh-12/TREC_RAG_2026](https://github.com/AnnieHsieh-12/TREC_RAG_2026)
 - **Status:** Public implementation of the competition system. The team
