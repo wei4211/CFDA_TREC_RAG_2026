@@ -1,0 +1,229 @@
+import assert from "node:assert/strict";
+import {
+  existsSync,
+  mkdtempSync,
+  mkdirSync,
+  readFileSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+import test from "node:test";
+
+import { FINAL_MODELS, FINAL_POLICY } from "../config/final_pipeline";
+import { runFinalRetrievalPipeline } from "../src/trec-rag-2026/retrieval-pipeline/runner";
+
+const DOCID = "shard_00999_42";
+
+test("final Retrieval query and writer models use the Codex sidecar", () => {
+  assert.equal(FINAL_MODELS.base, "gpt-oss-120b");
+  assert.equal(FINAL_MODELS.query, "codex:gpt-5.6-sol");
+  assert.equal(FINAL_MODELS.writer, "codex:gpt-5.6-sol");
+});
+
+test("final Retrieval orchestration completes one mocked topic", async () => {
+  const root = mkdtempSync(join(tmpdir(), "cfda-retrieval-smoke-"));
+  const topics = join(root, "topics.tsv");
+  const qrels = join(root, "qrels");
+  const output = join(root, "output");
+  writeFileSync(topics, "1\tExplain the verified retrieval fact.\n");
+  mkdirSync(qrels);
+  writeFileSync(join(qrels, "fixture.qrels"), `1 0 ${DOCID} 2\n`);
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    if (url.includes("/search?")) {
+      return jsonResponse({ candidates: [{ docid: DOCID, score: 10 }] });
+    }
+    if (url.includes("/doc/")) {
+      return jsonResponse({
+        doc: { text: "The verified retrieval fact appears here." },
+      });
+    }
+    if (url === "http://mock.nchc/chat/completions") {
+      return jsonResponse({
+        choices: [{ message: { content: '{"enough":true,"queries":[]}' } }],
+      });
+    }
+    throw new Error(`Unexpected Retrieval smoke-test request: ${url}`);
+  };
+
+  try {
+    const result = await runFinalRetrievalPipeline({
+      runId: "retrieval-smoke",
+      teamId: "cfda",
+      outputDir: output,
+      topicsPath: topics,
+      qrelsDir: qrels,
+      pyseriniBaseUrl: "http://mock.pyserini",
+      pyseriniIndex: "climbmix-400b",
+      pyseriniTokenEnv: "PYSERINI_API_TOKEN",
+      initialDocs: 1,
+      docsPerIteration: 1,
+      maxDocumentsRead: 1,
+      maxIterations: 1,
+      documentReadLimit: 20,
+      llm: {
+        provider: "nchc_llm",
+        model: "mock-model",
+        apiKeyEnv: "NCHC_API_KEY",
+        baseUrl: "http://mock.nchc",
+      },
+      env: {
+        NCHC_API_KEY: "test-only",
+        PYSERINI_API_TOKEN: "test-only",
+        R_ONLY: "1",
+      },
+      force: true,
+      policy: {
+        ...FINAL_POLICY,
+        q2d_enabled: false,
+        rerank_depth: 0,
+        fusion_dense: false,
+        facet_queries: false,
+        per_aspect_generation: false,
+        comprehensive_answer: false,
+        reflection: false,
+        citation_verify: false,
+        llm_revise: false,
+        reattribute: false,
+      },
+    });
+
+    assert.deepEqual(result.validation, {
+      ok: true,
+      output_count: 1,
+      expected_count: 1,
+    });
+    const pool = readFileSync(
+      join(output, "candidate_pool_top5000.trec"),
+      "utf8",
+    );
+    assert.match(pool, new RegExp(`^1 Q0 ${DOCID} 1 `));
+    const metrics = JSON.parse(
+      readFileSync(join(output, "metrics.json"), "utf8"),
+    );
+    assert.equal(metrics.qrels[0].qrels_filename, "fixture.qrels");
+    const perTopic = JSON.parse(
+      readFileSync(join(output, "per_topic_metrics.json"), "utf8"),
+    );
+    assert.equal(perTopic["fixture.qrels"]["1"].ndcg_10, 1);
+    const provenance = JSON.parse(
+      readFileSync(join(output, "qrels_metadata.json"), "utf8"),
+    );
+    assert.equal(provenance.files[0].filename, "fixture.qrels");
+    assert.match(provenance.files[0].sha256, /^[a-f0-9]{64}$/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("Retrieval runs without qrels and omits diagnostic metrics", async () => {
+  const root = mkdtempSync(join(tmpdir(), "cfda-retrieval-no-qrels-"));
+  const topics = join(root, "topics.tsv");
+  const output = join(root, "output");
+  writeFileSync(topics, "1\tExplain the verified retrieval fact.\n");
+
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    const url = String(input);
+    if (url.includes("/search?"))
+      return jsonResponse({ candidates: [{ docid: DOCID, score: 10 }] });
+    if (url.includes("/doc/"))
+      return jsonResponse({ doc: { text: "The verified fact." } });
+    if (url === "http://mock.nchc/chat/completions")
+      return jsonResponse({
+        choices: [{ message: { content: '{"enough":true,"queries":[]}' } }],
+      });
+    throw new Error(`Unexpected request: ${url}`);
+  };
+
+  try {
+    await runFinalRetrievalPipeline({
+      runId: "no-qrels",
+      teamId: "cfda",
+      outputDir: output,
+      topicsPath: topics,
+      pyseriniBaseUrl: "http://mock.pyserini",
+      pyseriniIndex: "climbmix-400b",
+      pyseriniTokenEnv: "PYSERINI_API_TOKEN",
+      initialDocs: 1,
+      docsPerIteration: 1,
+      maxDocumentsRead: 1,
+      maxIterations: 1,
+      documentReadLimit: 20,
+      llm: {
+        provider: "nchc_llm",
+        model: "mock-model",
+        apiKeyEnv: "NCHC_API_KEY",
+        baseUrl: "http://mock.nchc",
+      },
+      env: {
+        NCHC_API_KEY: "test-only",
+        PYSERINI_API_TOKEN: "test-only",
+        R_ONLY: "1",
+      },
+      force: true,
+      policy: {
+        ...FINAL_POLICY,
+        q2d_enabled: false,
+        rerank_depth: 0,
+        fusion_dense: false,
+        facet_queries: false,
+        per_aspect_generation: false,
+        comprehensive_answer: false,
+        reflection: false,
+        citation_verify: false,
+        llm_revise: false,
+        reattribute: false,
+      },
+    });
+    assert.equal(existsSync(join(output, "metrics.json")), false);
+    assert.equal(existsSync(join(output, "per_topic_metrics.json")), false);
+    assert.equal(existsSync(join(output, "qrels_metadata.json")), false);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
+test("unrelated qrels fail before force removes an existing output", async () => {
+  const root = mkdtempSync(join(tmpdir(), "cfda-retrieval-qrels-preflight-"));
+  const topics = join(root, "topics.tsv");
+  const qrels = join(root, "qrels");
+  const output = join(root, "output");
+  writeFileSync(topics, "1\tExample narrative.\n");
+  mkdirSync(qrels);
+  mkdirSync(output);
+  writeFileSync(join(qrels, "unrelated.qrels"), "other 0 shard_00001_1 2\n");
+  writeFileSync(join(output, "sentinel"), "keep");
+
+  await assert.rejects(
+    runFinalRetrievalPipeline({
+      runId: "preflight",
+      teamId: "cfda",
+      outputDir: output,
+      topicsPath: topics,
+      qrelsDir: qrels,
+      pyseriniBaseUrl: "http://unused",
+      pyseriniIndex: "climbmix-400b",
+      pyseriniTokenEnv: "PYSERINI_API_TOKEN",
+      initialDocs: 1,
+      docsPerIteration: 1,
+      maxDocumentsRead: 1,
+      maxIterations: 1,
+      documentReadLimit: 1,
+      llm: { provider: "nchc_llm", model: "unused" },
+      force: true,
+    }),
+    /no topic IDs in common/,
+  );
+  assert.equal(readFileSync(join(output, "sentinel"), "utf8"), "keep");
+});
+
+function jsonResponse(value: unknown): Response {
+  return new Response(JSON.stringify(value), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  });
+}
